@@ -2,23 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use App\User;
-use Illuminate\Http\Request;
+use App\Http\Requests\UserLoginRequest;
+use App\Http\Resources\User as UserResources;
 
 class LoginController extends Controller
 {
-    public function index(Request $request)
+    public function index(UserLoginRequest $request)
     {
-        $validatedData = $request->validate([
-            'email' => 'required|unique:user',
-            'name' => 'required',
-            'password' => 'required',
-        ]);
+        if(!$token=auth()->attempt($request->only('email','password'))){
+            return abort(401);
+        }
 
-        User::create([
-            'email'=>$request->email,
-            'name'=>$request->name,
-            'password'=> bcrypt($request->password),
+        return  (new UserResources($request->user()))->additional([
+            'meta'=>[
+                'token'=>$token,
+            ],
         ]);
+      
     }
 }
